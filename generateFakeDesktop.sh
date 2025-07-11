@@ -1,9 +1,32 @@
 #!/usr/bin/env bash
 
+get_wallpaper() {
+    # Try feh
+    if [ -f ~/.fehbg ]; then
+        grep -oE '/[^ ]+\.(jpg|png|jpeg|bmp)' ~/.fehbg | head -n1 && return
+    fi
+    # Try GNOME
+    if command -v gsettings >/dev/null 2>&1; then
+        gsettings get org.gnome.desktop.background picture-uri 2>/dev/null | \
+            sed -e "s/^'file:\/\///" -e "s/'$//" | grep -E '\.(jpg|png|jpeg|bmp)$' && return
+    fi
+    # Try XFCE
+    if command -v xfconf-query >/dev/null 2>&1; then
+        xfconf-query --channel xfce4-desktop --property /backdrop/screen0/monitor0/image-path 2>/dev/null | \
+            grep -E '\.(jpg|png|jpeg|bmp)$' && return
+    fi
+    # Try KDE (Plasma 5, may need tweaking)
+    if command -v qdbus >/dev/null 2>&1; then
+        qdbus org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript \
+            "print(desktops()[0].wallpaperPlugin); print(desktops()[0].currentConfigGroup); print(desktops()[0].wallpaper);" 2>/dev/null | \
+            grep -m1 '^file:' | sed 's|file://||' | grep -E '\.(jpg|png|jpeg|bmp)$' && return
+    fi
+    echo ""
+}
+
 # Get monitor info: name, width, height, x, y
 monitors=()
 while read -r line; do
-    # Example: HDMI-1 connected primary 1920x1080+0+0 ...
     if [[ $line =~ ^([A-Za-z0-9-]+)\ connected.*\ ([0-9]+)x([0-9]+)\+([0-9]+)\+([0-9]+) ]]; then
         name="${BASH_REMATCH[1]}"
         w="${BASH_REMATCH[2]}"
@@ -25,20 +48,27 @@ for m in "${monitors[@]}"; do
     (( y2 > max_y )) && max_y=$y2
 done
 
-# Create base image
+# Detect wallpaper
+wallpaper=$(get_wallpaper)
+echo "Detected wallpaper: $wallpaper"
+
 output="monitors.png"
-convert -size "${max_x}x${max_y}" xc:white "$output"
+tmpbg="tmpbg.png"
+magick -size "${max_x}x${max_y}" xc:white "$output"
 
-# List of colors to cycle through
-colors=(red green blue yellow orange cyan magenta purple pink gray)
-
-# Draw rectangles
-i=0
 for m in "${monitors[@]}"; do
     IFS=: read name w h x y <<< "$m"
-    color="${colors[$((i % ${#colors[@]}))]}"
-    convert "$output" -fill "$color" -draw "rectangle $x,$y $((x+w)),$((y+h))" "$output"
-    ((i++))
+    if [ -n "$wallpaper" ] && [ -f "$wallpaper" ]; then
+        # Create a temp image for this monitor
+        magick "$wallpaper" -resize "${w}x${h}^" -gravity center -extent "${w}x${h}" "$tmpbg"
+        # Composite it onto the canvas at the correct position
+        magick "$output" "$tmpbg" -geometry "+${x}+${y}" -composite "$output"
+    else
+        # Fallback: fill with a color if no wallpaper found
+        color="#$(openssl rand -hex 3)"
+        magick "$output" -fill "$color" -draw "rectangle $x,$y $((x+w)),$((y+h))" "$output"
+    fi
 done
 
+rm -f "$tmpbg"
 echo "Created $output" 

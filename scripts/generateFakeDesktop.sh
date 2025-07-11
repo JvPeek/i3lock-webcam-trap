@@ -80,6 +80,46 @@ tmpbg="tmpbg.png"
 # Create a truecolor RGB base image
 magick -size 1x1 canvas:white -resize "${max_x}x${max_y}!" -colorspace sRGB "PNG24:$output"
 
+# --- ICON BAR GENERATION ---
+create_center_icon_bar() {
+    local icon_dir="icons/center"
+    local out_png="icons/center.png"
+    local icon_size=40
+    local icons=()
+    local i=0
+    # Collect all PNGs, sorted
+    while IFS= read -r f; do
+        icons+=("$f")
+    done < <(find "$icon_dir" -maxdepth 1 -type f -iname '*.png' | sort)
+    local num_icons=${#icons[@]}
+    local width=$((icon_size * num_icons))
+    if (( num_icons == 0 )); then
+        echo "No icons found in $icon_dir, skipping center bar generation."
+        return
+    fi
+    # Build the magick command
+    local cmd=(magick convert -background none -extent "${width}x${icon_size}")
+    for icon in "${icons[@]}"; do
+        cmd+=( "(" "$icon" -resize ${icon_size}x${icon_size}^ -gravity center -extent ${icon_size}x${icon_size} ")" -geometry "+$((i*icon_size))+0" -gravity NorthWest -composite )
+        ((i++))
+    done
+    cmd+=("$out_png")
+    # Run the command
+    "${cmd[@]}"
+    echo "Created $out_png with $num_icons icons."
+}
+
+# Call the icon bar generation before main logic
+create_center_icon_bar
+
+# Get icon bar dimensions
+ICON_BAR="icons/center.png"
+ICON_BAR_W=0
+ICON_BAR_H=0
+if [ -f "$ICON_BAR" ]; then
+    read ICON_BAR_W ICON_BAR_H < <(magick identify -format '%w %h' "$ICON_BAR")
+fi
+
 for m in "${monitors[@]}"; do
     IFS=: read name w h x y <<< "$m"
     if [ -n "$wallpaper" ] && [ -f "$wallpaper" ]; then
@@ -87,6 +127,12 @@ for m in "${monitors[@]}"; do
         magick "$wallpaper" -resize "${w}x${h}^" -gravity center -extent "${w}x${h}" -colorspace sRGB "$tmpbg"
         # Blur and darken the lower bar
         blur_and_darken_bar "$tmpbg" "$w" "$h" "$BAR_HEIGHT_PIXELS" "$DARKEN_PERCENT"
+        # Composite icon bar at the center of the bottom bar ON TMPBG
+        if [ "$ICON_BAR_W" -gt 0 ] && [ "$ICON_BAR_H" -gt 0 ]; then
+            ICON_X=$(( (w - ICON_BAR_W) / 2 ))
+            ICON_Y=$(( h - BAR_HEIGHT_PIXELS/2 - ICON_BAR_H/2 ))
+            magick "$tmpbg" "$ICON_BAR" -geometry "+${ICON_X}+${ICON_Y}" -composite "$tmpbg"
+        fi
         # Composite it onto the canvas at the correct position
         magick "$output" "$tmpbg" -geometry "+${x}+${y}" -composite "PNG24:$output"
     else
@@ -94,6 +140,7 @@ for m in "${monitors[@]}"; do
         color="#$(openssl rand -hex 3)"
         magick "$output" -fill "$color" -draw "rectangle $x,$y $((x+w)),$((y+h))" "PNG24:$output"
     fi
+
 done
 
 rm -f "$tmpbg"

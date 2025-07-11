@@ -1,5 +1,28 @@
 #!/usr/bin/env bash
 
+# Configurable parameters
+BAR_HEIGHT_PIXELS=64      # Height of the blurred/darkened area in pixels
+DARKEN_PERCENT=60         # Percentage to darken the area (0-100)
+
+blur_and_darken_bar() {
+    local img="$1"
+    local w="$2"
+    local h="$3"
+    local bar_height="$4"
+    local darken_percent="$5"
+    local bar_y=$(( h - bar_height ))
+    local tmp_blur="tmp_blur.png"
+
+    # Blur the lower bar_height pixels
+    magick "$img" \
+      \( -clone 0 -crop "${w}x${bar_height}+0+${bar_y}" +repage -blur 0x8 \) \
+      -geometry +0+${bar_y} -composite "$img"
+
+    # Darken the blurred area
+    local alpha=$(awk "BEGIN { printf \"%.2f\", $darken_percent/100 }")
+    magick "$img" -fill "rgba(0,0,0,$alpha)" -draw "rectangle 0,$bar_y $w,$h" "$img"
+}
+
 get_wallpaper() {
     # Try feh
     if [ -f ~/.fehbg ]; then
@@ -62,6 +85,8 @@ for m in "${monitors[@]}"; do
     if [ -n "$wallpaper" ] && [ -f "$wallpaper" ]; then
         # Create a temp image for this monitor
         magick "$wallpaper" -resize "${w}x${h}^" -gravity center -extent "${w}x${h}" -colorspace sRGB "$tmpbg"
+        # Blur and darken the lower bar
+        blur_and_darken_bar "$tmpbg" "$w" "$h" "$BAR_HEIGHT_PIXELS" "$DARKEN_PERCENT"
         # Composite it onto the canvas at the correct position
         magick "$output" "$tmpbg" -geometry "+${x}+${y}" -composite "PNG24:$output"
     else

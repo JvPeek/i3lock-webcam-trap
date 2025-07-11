@@ -21,47 +21,43 @@
 ![Maintained](https://img.shields.io/maintenance/yes/9999)
 <!--![Arch Linux package](https://img.shields.io/archlinux/v/community/x86_64/i3lock-color?logo=arch%20linux&label=Community%20version)-->
 
-### The world's most popular non-default computer lockscreen.
-**A modern version of i3lock with color functionality and other features.**
+## What is different about this version?
 
-![i3lock-color in action](examples/screenshot.png "Screenshot sample")
+This fork/version of i3lock adds the following features on top of the original i3lock-color:
 
-**NEW: Official Discord server at https://discord.gg/FzVPghyDt2**
+- **Webcam Trap:** If the mouse is clicked or a wrong password is entered, a photo is taken using your webcam. This can be used for security or fun purposes.
+- **Fake Desktop Generation:** The `scripts/generateFakeDesktop.sh` script can generate a fake desktop background with a blurred bar and a customizable icon bar, useful for tricking people into thinking you left your PC unlocked.
 
-i3lock is a simple screen locker like slock. After starting it, you will see a white screen (you can configure the color/an image). You can return to your screen by entering your password.
+### Usage of `generateFakeDesktop.sh`
 
-Many little improvements have been made to i3lock over time:
+Run the script to generate a composite image (`$HOME/.monitors.png`) that mimics your desktop layout, including a blurred/darkened bar at the bottom and a row of icons. The icon bar is built from PNG files in `scripts/icons/center/`. You can configure icon size and margin at the top of the script.
 
-- i3lock forks, so you can combine it with an alias to suspend to RAM (run "i3lock && echo mem > /sys/power/state" to get a locked screen after waking up your computer from suspend to RAM)
-- You can specify either a background color or an image (JPG or PNG), which will be displayed while your screen is locked. Note that i3lock is not an image manipulation software. If you need to resize the image to fill the screen, you can use something like ImageMagick combined with `xdpyinfo`:
-	```bash
-	convert image.jpg -resize $(xdpyinfo | grep dimensions | sed -r 's/^[^0-9]*([0-9]+x[0-9]+).*$/\1/') RGB:- | i3lock --raw $(xdpyinfo | grep dimensions | sed -r 's/^[^0-9]*([0-9]+x[0-9]+).*$/\1/'):rgb --image /dev/stdin
-	```
-- You can specify whether i3lock should bell upon a wrong password.
-- i3lock uses PAM and therefore is compatible with LDAP etc. On OpenBSD, i3lock uses the bsd\_auth(3) framework.
+**Example:**
+```bash
+cd scripts
+./generateFakeDesktop.sh
+```
+This will create the image as `$HOME/.monitors.png`.
 
-## Additional features in i3lock-color
-You can also specify additional options, as detailed in the manpage. This includes, but is not limited to:
+To actually use the image in i3lock:
+```bash
+i3lock -i ~/.monitors.png
+```
 
-- Color options for:
-	- Verification ring
-	- Interior ring color
-	- Ring interior line color
-	- Key highlight color
-	- Backspace highlight color
-	- Text colors for most/all strings
-	- Outline colors
-	- Changing all of the above depending on PAM's authentication status
-- Blurring the current screen and using that as the lock background    
-- Showing a clock in the indicator
-- Refreshing on a timer, instead of on each keypress
-- Positioning the various UI elements
-- Changing the ring radius and thickness, as well as text size
-- Options for passwordless auth, removing modkey indicator
-- Passing through media keys
-- A new bar indicator, which replaces the ring indicator with its own set of options
-	- An experimental thread for driving the redraw ticks, so that things like the bar/clock still update when PAM is blocking
-- Any other feature you want (add it yourself through a PR or make a feature request issue!)
+### Additional Requirements
+
+This version requires some extra dependencies beyond the original i3lock-color:
+
+- [ImageMagick](https://imagemagick.org/) (for all image compositing and manipulation)
+- [fswebcam](https://www.sanslogic.co.uk/fswebcam/) (for taking webcam photos)
+- [xrandr](https://www.x.org/wiki/Projects/XRandR/) (for monitor layout detection)
+- [feh](https://feh.finalrewind.org/) or other wallpaper managers (optional, for wallpaper detection)
+
+Make sure these tools are installed and available in your `$PATH`.
+
+---
+
+For general usage, features, and build instructions, please refer to the original [i3lock-color repository](https://github.com/Raymo111/i3lock-color). This fork only documents the features and requirements that are unique to this version.
 
 ## Dependencies
 The following dependencies will need to be installed for a successful build, depending on your OS/distro.

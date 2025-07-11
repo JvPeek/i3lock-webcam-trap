@@ -54,19 +54,20 @@ echo "Detected wallpaper: $wallpaper"
 
 output="monitors.png"
 tmpbg="tmpbg.png"
-magick -size "${max_x}x${max_y}" xc:white "$output"
+# Create a truecolor RGB base image
+magick -size 1x1 canvas:white -resize "${max_x}x${max_y}!" -colorspace sRGB "PNG24:$output"
 
 for m in "${monitors[@]}"; do
     IFS=: read name w h x y <<< "$m"
     if [ -n "$wallpaper" ] && [ -f "$wallpaper" ]; then
         # Create a temp image for this monitor
-        magick "$wallpaper" -resize "${w}x${h}^" -gravity center -extent "${w}x${h}" "$tmpbg"
+        magick "$wallpaper" -resize "${w}x${h}^" -gravity center -extent "${w}x${h}" -colorspace sRGB "$tmpbg"
         # Composite it onto the canvas at the correct position
-        magick "$output" "$tmpbg" -geometry "+${x}+${y}" -composite "$output"
+        magick "$output" "$tmpbg" -geometry "+${x}+${y}" -composite "PNG24:$output"
     else
         # Fallback: fill with a color if no wallpaper found
         color="#$(openssl rand -hex 3)"
-        magick "$output" -fill "$color" -draw "rectangle $x,$y $((x+w)),$((y+h))" "$output"
+        magick "$output" -fill "$color" -draw "rectangle $x,$y $((x+w)),$((y+h))" "PNG24:$output"
     fi
 done
 

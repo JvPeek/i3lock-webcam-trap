@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 
 # Configurable parameters
-BAR_HEIGHT_PIXELS=64      # Height of the blurred/darkened area in pixels
+BAR_HEIGHT_PIXELS=48      # Height of the blurred/darkened area in pixels
 DARKEN_PERCENT=60         # Percentage to darken the area (0-100)
+ICON_SIZE=24              # Size of each icon in the bar (pixels)
+ICON_MARGIN=5            # Margin between icons (pixels)
 
 blur_and_darken_bar() {
     local img="$1"
@@ -84,13 +86,11 @@ magick -size 1x1 canvas:white -resize "${max_x}x${max_y}!" -colorspace sRGB "PNG
 create_center_icon_bar() {
     local icon_dir="icons/center"
     local out_png="icons/center.png"
-    local icon_size=40
-    local icon_margin=10
 
     # Use montage to create the icon bar
     montage "$icon_dir"/*.png \
-        -resize ${icon_size}x${icon_size} \
-        -geometry ${icon_size}x${icon_size}+${icon_margin}+0 \
+        -resize ${ICON_SIZE}x${ICON_SIZE} \
+        -geometry ${ICON_SIZE}x${ICON_SIZE}+${ICON_MARGIN}+0 \
         -background none \
         -tile x1 \
         "PNG32:$out_png"

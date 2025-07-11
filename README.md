@@ -1,25 +1,4 @@
-# i3lock-color
-
-![Language count](https://img.shields.io/github/languages/count/Raymo111/i3lock-color)
-[![Top language](https://img.shields.io/github/languages/top/Raymo111/i3lock-color)](https://github.com/Raymo111/i3lock-color/search?l=c)
-![Repo size](https://img.shields.io/github/repo-size/Raymo111/i3lock-color)
-[![Open issues](https://img.shields.io/github/issues-raw/Raymo111/i3lock-color)](https://github.com/Raymo111/i3lock-color/issues?q=is%3Aopen+is%3Aissue)
-[![Closed issues](https://img.shields.io/github/issues-closed-raw/Raymo111/i3lock-color?color=brightgreen)](https://github.com/Raymo111/i3lock-color/issues?q=is%3Aissue+is%3Aclosed)
-[![Open PRs](https://img.shields.io/github/issues-pr-raw/Raymo111/i3lock-color?label=open%20PRs)](https://github.com/Raymo111/i3lock-color/pulls?q=is%3Aopen+is%3Apr)
-[![Closed PRs](https://img.shields.io/github/issues-pr-closed-raw/Raymo111/i3lock-color?color=brightgreen&label=closed%20PRs)](https://github.com/Raymo111/i3lock-color/pulls?q=is%3Apr+is%3Aclosed)
-[![Contributors](https://img.shields.io/github/contributors/Raymo111/i3lock-color)](https://github.com/Raymo111/i3lock-color/graphs/contributors)
-[![Latest release](https://img.shields.io/github/release-date/Raymo111/i3lock-color?label=latest%20release)](https://github.com/Raymo111/i3lock-color/releases/latest)
-[![Commits](https://img.shields.io/github/commits-since/Raymo111/i3lock-color/latest?include_prereleases&sort=semver)](https://github.com/Raymo111/i3lock-color/commits/master)
-![Latest commit](https://img.shields.io/github/last-commit/Raymo111/i3lock-color)
-[![AUR release ver](https://img.shields.io/aur/version/i3lock-color?label=AUR%20release%20ver&logo=ArchLinux)](https://aur.archlinux.org/packages/i3lock-color/)
-[![AUR git ver](https://img.shields.io/aur/version/i3lock-color-git?label=AUR%20git%20ver&logo=ArchLinux)](https://aur.archlinux.org/packages/i3lock-color-git/)
-![AUR votes](https://img.shields.io/aur/votes/i3lock-color-git?logo=ArchLinux)
-[![GitHub forks](https://img.shields.io/github/forks/Raymo111/i3lock-color?logo=GitHub)](https://github.com/Raymo111/i3lock-color/network/members)
-[![GitHub stars](https://img.shields.io/github/stars/Raymo111/i3lock-color?logo=GitHub)](https://github.com/Raymo111/i3lock-color/stargazers)
-[![GitHub watchers](https://img.shields.io/github/watchers/Raymo111/i3lock-color?logo=GitHub)](https://github.com/Raymo111/i3lock-color/watchers)
-[![Discord server](https://img.shields.io/discord/878461145197977630?label=Discord&logo=Discord)](https://discord.gg/FzVPghyDt2)
-![Maintained](https://img.shields.io/maintenance/yes/9999)
-<!--![Arch Linux package](https://img.shields.io/archlinux/v/community/x86_64/i3lock-color?logo=arch%20linux&label=Community%20version)-->
+# i3lock-webcam-trap
 
 ## What is different about this version?
 

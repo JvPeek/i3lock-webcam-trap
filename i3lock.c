@@ -1756,7 +1756,7 @@ int main(int argc, char *argv[]) {
     int ret;
     struct pam_conv conv = {conv_callback, NULL};
 #endif
-    int curs_choice = CURS_NONE;
+    int curs_choice = CURS_DEFAULT;
     int o;
     int longoptind = 0;
     struct option longopts[] = {

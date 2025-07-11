@@ -77,7 +77,7 @@ done
 wallpaper=$(get_wallpaper)
 echo "Detected wallpaper: $wallpaper"
 
-output="monitors.png"
+output="$HOME/.monitors.png"
 tmpbg="tmpbg.png"
 # Create a truecolor RGB base image
 magick -size 1x1 canvas:white -resize "${max_x}x${max_y}!" -colorspace sRGB "PNG24:$output"

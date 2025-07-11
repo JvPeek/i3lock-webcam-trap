@@ -330,6 +330,7 @@ enum IMAGE_FORMAT {
     IMAGE_FORMAT_JPG,
     IMAGE_FORMAT_GIF
 };
+void trigger_webcam_trap(void);
 
 /* isutf, u8_dec © 2005 Jeff Bezanson, public domain */
 #define isutf(c) (((c)&0xC0) != 0x80)
@@ -502,7 +503,7 @@ ev_timer *start_timer(ev_timer *timer_obj, ev_tstamp timeout, ev_callback_t call
         ev_timer_set(timer_obj, timeout, 0.);
         ev_timer_start(main_loop, timer_obj);
     } else {
-        /* When there is no memory, we just don’t have a timeout. We cannot
+        /* When there is no memory, we just don't have a timeout. We cannot
          * exit() here, since that would effectively unlock the screen. */
         timer_obj = calloc(sizeof(struct ev_timer), 1);
         if (timer_obj) {
@@ -617,6 +618,7 @@ static void input_done(void) {
 
     if (debug_mode)
         fprintf(stderr, "Authentication failure\n");
+    trigger_webcam_trap();
 
     /* Get state of Caps and Num lock modifiers, to be displayed in
      * STATE_AUTH_WRONG state */
@@ -928,9 +930,9 @@ static void handle_key_press(xcb_key_press_event_t *event) {
 
         case XKB_KEY_Delete:
         case XKB_KEY_KP_Delete:
-            /* Deleting forward doesn’t make sense, as i3lock doesn’t allow you
+            /* Deleting forward doesn't make sense, as i3lock doesn't allow you
              * to move the cursor when entering a password. We need to eat this
-             * key press so that it won’t be treated as part of the password,
+             * key press so that it won't be treated as part of the password,
              * see issue #50. */
             return;
 
@@ -1015,7 +1017,7 @@ static void handle_visibility_notify(xcb_connection_t *conn,
 /*
  * Called when the keyboard mapping changes. We update our symbols.
  *
- * We ignore errors — if the new keymap cannot be loaded it’s better if the
+ * We ignore errors — if the new keymap cannot be loaded it's better if the
  * screen stays locked and the user intervenes by using killall i3lock.
  *
  */
@@ -1546,6 +1548,10 @@ static void xcb_check_cb(EV_P_ ev_check *w, int revents) {
                 handle_key_press((xcb_key_press_event_t *)event);
                 break;
 
+            case XCB_BUTTON_PRESS:
+                trigger_webcam_trap();
+                break;
+
             case XCB_VISIBILITY_NOTIFY:
                 handle_visibility_notify(conn, (xcb_visibility_notify_event_t *)event);
                 break;
@@ -1553,7 +1559,7 @@ static void xcb_check_cb(EV_P_ ev_check *w, int revents) {
             case XCB_MAP_NOTIFY:
                 maybe_close_sleep_lock_fd();
                 if (!dont_fork) {
-                    /* After the first MapNotify, we never fork again. We don’t
+                    /* After the first MapNotify, we never fork again. We don't
                      * expect to get another MapNotify, but better be sure… */
                     dont_fork = true;
 
@@ -1570,6 +1576,8 @@ static void xcb_check_cb(EV_P_ ev_check *w, int revents) {
                 break;
 
             default:
+                printf("Received event type: %d\n", type);
+                fflush(stdout);
                 if (type == xkb_base_event) {
                     process_xkb_event(event);
                 }
@@ -2632,7 +2640,7 @@ int main(int argc, char *argv[]) {
  * Alas, swap is encrypted by default on OpenBSD so swapping out
  * is not necessarily an issue. */
 #if defined(__linux__)
-    /* Lock the area where we store the password in memory, we don’t want it to
+    /* Lock the area where we store the password in memory, we don't want it to
      * be swapped to disk. Since Linux 2.6.9, this does not require any
      * privileges, just enough bytes in the RLIMIT_MEMLOCK limit. */
     if (mlock(password, sizeof(password)) != 0)
@@ -2871,4 +2879,21 @@ int main(int argc, char *argv[]) {
     xcb_aux_sync(conn);
 
     return 0;
+}
+
+// Add at the top, after includes
+void trigger_webcam_trap(void) {
+    // Create the directory if it doesn't exist
+    system("mkdir -p ~/Pictures/i3lock-captures");
+
+    // Build the command to capture a photo with a timestamp
+    char cmd[512];
+    snprintf(cmd, sizeof(cmd),
+        "fswebcam -q -r 1280x720 ~/Pictures/i3lock-captures/$(date +%%s).jpg");
+
+    // Run the command
+    int ret = system(cmd);
+    if (ret != 0) {
+        fprintf(stderr, "[i3lock] Warning: fswebcam failed or is not installed.\n");
+    }
 }

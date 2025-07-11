@@ -85,28 +85,17 @@ create_center_icon_bar() {
     local icon_dir="icons/center"
     local out_png="icons/center.png"
     local icon_size=40
-    local icons=()
-    local i=0
-    # Collect all PNGs, sorted
-    while IFS= read -r f; do
-        icons+=("$f")
-    done < <(find "$icon_dir" -maxdepth 1 -type f -iname '*.png' | sort)
-    local num_icons=${#icons[@]}
-    local width=$((icon_size * num_icons))
-    if (( num_icons == 0 )); then
-        echo "No icons found in $icon_dir, skipping center bar generation."
-        return
-    fi
-    # Build the magick command
-    local cmd=(magick convert -background none -extent "${width}x${icon_size}")
-    for icon in "${icons[@]}"; do
-        cmd+=( "(" "$icon" -resize ${icon_size}x${icon_size}^ -gravity center -extent ${icon_size}x${icon_size} ")" -geometry "+$((i*icon_size))+0" -gravity NorthWest -composite )
-        ((i++))
-    done
-    cmd+=("$out_png")
-    # Run the command
-    "${cmd[@]}"
-    echo "Created $out_png with $num_icons icons."
+    local icon_margin=10
+
+    # Use montage to create the icon bar
+    montage "$icon_dir"/*.png \
+        -resize ${icon_size}x${icon_size} \
+        -geometry ${icon_size}x${icon_size}+${icon_margin}+0 \
+        -background none \
+        -tile x1 \
+        "PNG32:$out_png"
+
+    echo "Created $out_png with montage."
 }
 
 # Call the icon bar generation before main logic
@@ -131,10 +120,11 @@ for m in "${monitors[@]}"; do
         if [ "$ICON_BAR_W" -gt 0 ] && [ "$ICON_BAR_H" -gt 0 ]; then
             ICON_X=$(( (w - ICON_BAR_W) / 2 ))
             ICON_Y=$(( h - BAR_HEIGHT_PIXELS/2 - ICON_BAR_H/2 ))
-            magick "$tmpbg" "$ICON_BAR" -geometry "+${ICON_X}+${ICON_Y}" -composite "$tmpbg"
+            # Use PNG32 for tmpbg to preserve alpha, and composite with -compose over
+            magick "$tmpbg" "$ICON_BAR" -geometry "+${ICON_X}+${ICON_Y}" -compose over -composite "PNG32:$tmpbg"
         fi
-        # Composite it onto the canvas at the correct position
-        magick "$output" "$tmpbg" -geometry "+${x}+${y}" -composite "PNG24:$output"
+        # Composite it onto the canvas at the correct position, preserving alpha
+        magick "$output" "$tmpbg" -geometry "+${x}+${y}" -compose over -composite "PNG32:$output"
     else
         # Fallback: fill with a color if no wallpaper found
         color="#$(openssl rand -hex 3)"
